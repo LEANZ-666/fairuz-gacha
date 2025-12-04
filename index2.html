@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengingat PR Dinamis + Mode Gelap</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- GAYA DASAR (LIGHT MODE) --- */
+        body {
+            font-family: sans-serif; background-color: #f0f2f5; display: flex;
+            justify-content: center; padding-top: 20px; margin: 0;
+            transition: background-color 0.3s; 
+        }
+
+        .aplikasi-hp {
+            width: 100%; max-width: 400px; background-color: white;
+            min-height: 90vh; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative; transition: background-color 0.3s, box-shadow 0.3s; 
+        }
+
+        /* Tombol Mode (Untuk Ikon Bulan/Matahari) */
+        .tombol-mode {
+            background: none; border: none; color: white; cursor: pointer;
+            padding: 5px; font-size: 16px;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            background: linear-gradient(to right, #4facfe, #a18cd1);
+            color: white; padding: 25px; border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px; transition: background 0.3s;
+        }
+
+        .baris-atas { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .judul-app { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+
+        .container-statistik { display: flex; gap: 10px; justify-content: space-between; }
+        .kotak-statistik {
+            background-color: rgba(255, 255, 255, 0.2); flex: 1; text-align: center;
+            padding: 10px; border-radius: 10px; transition: background-color 0.3s;
+        }
+        .angka-besar { font-size: 20px; font-weight: bold; }
+        .label-kecil { font-size: 12px; opacity: 0.8; }
+
+        /* --- KONTEN & FILTER --- */
+        .konten { padding: 20px; }
+        .kotak-info { padding: 15px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; display: flex; gap: 10px; }
+        .info-orange { background-color: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; }
+        .info-biru { background-color: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; }
+        .filter-tab { background-color: #f3f4f6; padding: 5px; border-radius: 10px; display: flex; margin-bottom: 20px; transition: background-color 0.3s; }
+        .tombol-tab { flex: 1; border: none; background: none; padding: 10px; cursor: pointer; font-weight: bold; color: #6b7280; transition: background-color 0.2s; }
+        .tombol-tab.aktif { background-color: #3b82f6; color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .list-tugas { display: flex; flex-direction: column; gap: 15px; }
+        .kartu-tugas { border: 1px solid #e5e7eb; border-radius: 15px; padding: 15px; display: flex; gap: 15px; background-color: white; transition: all 0.3s; }
+        .kartu-tugas.selesai { opacity: 0.6; border-left: 5px solid #10b981; }
+        .bulat-cek { width: 20px; height: 20px; border-radius: 50%; margin-top: 5px; border: 2px solid #d1d5db; background-color: white; display: flex; align-items: center; justify-content: center; }
+        .kartu-tugas.selesai .bulat-cek { background-color: #10b981; border-color: #10b981; color: white; font-size: 12px; }
+        .detail-tugas h3 { margin: 5px 0; font-size: 16px; color: #333; transition: color 0.3s; }
+        .mata-pelajaran, .waktu { font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 5px; transition: color 0.3s; }
+        .badge-yellow { background-color: #fef9c3; color: #854d0e; } 
+        .badge-gray { background-color: #e5e7eb; color: #4b5563; } 
+        .badge-green { background-color: #d1fae5; color: #065f46; } 
+
+        /* --- GAYA POPUP WIFI --- */
+         .popup-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); display: none; 
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .popup-box {
+            background: white; width: 80%; padding: 20px; border-radius: 15px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: muncul 0.3s ease-out;
+        }
+        @keyframes muncul {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .input-grup { margin-bottom: 15px; text-align: left; }
+        .input-grup label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; }
+        .input-field {
+            width: 100%; padding: 10px; border: 1px solid #ddd;
+            border-radius: 8px; box-sizing: border-box; font-size: 14px;
+        }
+        .tombol-aksi { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { border: none; padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; font-weight: bold; }
+        .btn-batal { background-color: #f3f4f6; color: #666; }
+        .btn-simpan { background-color: #3b82f6; color: white; }
+        
+        /* --- GAYA DARK MODE --- */
+        .dark-mode { background-color: #121212; color: #e0e0e0; }
+        .dark-mode .aplikasi-hp { background-color: #1e1e1e; box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1); }
+        .dark-mode .header { background: linear-gradient(to right, #2c3e50, #34495e); }
+        .dark-mode .kotak-statistik { background-color: rgba(255, 255, 255, 0.1); }
+        .dark-mode .kartu-tugas { background-color: #2a2a2a; border: 1px solid #3a3a3a; }
+        .dark-mode .detail-tugas h3 { color: #ffffff; }
+        .dark-mode .mata-pelajaran, .dark-mode .waktu { color: #aaaaaa; }
+        .dark-mode .filter-tab { background-color: #2a2a2a; }
+        .dark-mode .tombol-tab { color: #999999; }
+        .dark-mode .tombol-tab.aktif { background-color: #007bff; color: white; }
+        .dark-mode .info-biru { background-color: #2c3e50; border: 1px solid #34495e; color: #b3cddf; }
+    </style>
+</head>
+<body onload="filterTasks('all')"> 
+    <div class="aplikasi-hp">
+        
+        <div class="header">
+            <div class="baris-atas">
+                <div class="judul-app">
+                    <i class="fa-solid fa-book-open"></i> Pengingat PR
+                </div>
+                <div>
+                    <button class="tombol-mode" onclick="toggleDarkMode()">
+                        <i id="modeIcon" class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="container-statistik">
+                <div class="kotak-statistik">
+                    <div id="totalCount" class="angka-besar">0</div>
+                    <div class="label-kecil">Total</div>
+                </div>
+                <div class="kotak-statistik">
+                    <div id="pendingCount" class="angka-besar">0</div>
+                    <div class="label-kecil">Belum</div>
+                </div>
+                <div class="kotak-statistik">
+                    <div id="completedCount" class="angka-besar">0</div>
+                    <div class="label-kecil">Selesai</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="konten">
+
+            <div id="infoBoxWifi" class="kotak-info info-orange">
+                <i class="fa-solid fa-wifi"></i>
+                <div>
+                    <strong>Belum terhubung ke alat</strong><br>
+                    <span style="text-decoration: underline; cursor: pointer;" onclick="bukaPopup()">
+                        Hubungkan sekarang
+                    </span>
+                </div>
+            </div>
+
+            <div class="kotak-info info-biru">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Gunakan alat fisik untuk menambah dan mengubah status PR</span>
+            </div>
+
+            <div class="filter-tab">
+                <button id="tabAll" class="tombol-tab aktif" onclick="filterTasks('all')">Semua</button>
+                <button id="tabPending" class="tombol-tab" onclick="filterTasks('pending')">Belum</button>
+                <button id="tabCompleted" class="tombol-tab" onclick="filterTasks('completed')">Selesai</button>
+            </div>
+
+            <div id="listTugas" class="list-tugas">
+                </div>
+
+        </div>
+
+        <div id="popupWifi" class="popup-overlay">
+            <div class="popup-box">
+                <div style="background: #eff6ff; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                    <i class="fa-solid fa-wifi text-xl text-blue-500" style="color: #3b82f6; font-size: 24px;"></i>
+                </div>
+                <h2>Hubungkan Alat</h2>
+                
+                <div class="input-grup">
+                    <label>Nama WiFi (SSID)</label>
+                    <input type="text" class="input-field" placeholder="Contoh: Indihome-Rumah" id="wifiSSID">
+                </div>
+
+                <div class="input-grup">
+                    <label>Kata Sandi (Password)</label>
+                    <input type="password" class="input-field" placeholder="Masukkan password..." id="wifiPassword">
+                </div>
+
+                <div class="tombol-aksi">
+                    <button class="btn btn-batal" onclick="tutupPopup()">Batal</button>
+                    <button class="btn btn-simpan" onclick="simpanWifi()">Sambungkan</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- FUNGSI DARK MODE ---
+        function toggleDarkMode() {
+            const body = document.body;
+            const icon = document.getElementById('modeIcon');
+            
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+        
+        // --- DATA SIMULASI ---
+        const dataPR = [
+            { id: 1, mapel: 'Matematika', judul: 'Latihan soal halaman 45 - 50', deadline: 'Besok', jam: '14:00', status: 'pending', badge: 'Sedang dikerjakan', badgeClass: 'badge-yellow' },
+            { id: 2, mapel: 'Bahasa Indonesia', judul: 'Membuat Puisi tentang Alam', deadline: 'Lusa', jam: '10:00', status: 'pending', badge: 'Belum dimulai', badgeClass: 'badge-gray' },
+            { id: 3, mapel: 'Fisika', judul: 'Menganalisis Gerak Parabola', deadline: 'Hari Ini', jam: '18:00', status: 'completed', badge: 'Selesai', badgeClass: 'badge-green' },
+            { id: 4, mapel: 'Sejarah', judul: 'Ringkasan Perang Diponegoro', deadline: 'Minggu Depan', jam: '09:00', status: 'pending', badge: 'Belum dimulai', badgeClass: 'badge-gray' },
+            { id: 5, mapel: 'Kimia', judul: 'Laporan Praktikum Reaksi Asam', deadline: '2 Hari Lagi', jam: '16:00', status: 'completed', badge: 'Selesai', badgeClass: 'badge-green' }
+        ];
+
+        // --- FUNGSI UPDATE COUNTER DI HEADER ---
+        function updateCounters(data) {
+            const total = dataPR.length; 
+            const pending = dataPR.filter(t => t.status === 'pending').length;
+            const completed = dataPR.filter(t => t.status === 'completed').length;
+
+            document.getElementById('totalCount').innerText = total;
+            document.getElementById('pendingCount').innerText = pending;
+            document.getElementById('completedCount').innerText = completed;
+        }
+
+        // --- FUNGSI RENDER (MEMBUAT HTML KARTU PR) ---
+        function renderTasks(tasks) {
+            const container = document.getElementById('listTugas');
+            let htmlContent = '';
+
+            if (tasks.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #666; padding: 30px;">Tidak ada PR dalam kategori ini.</p>`;
+                return;
+            }
+
+            tasks.forEach(tugas => {
+                const isCompleted = tugas.status === 'completed';
+                const checkIcon = isCompleted ? '<i class="fa-solid fa-check"></i>' : '';
+                const taskClass = isCompleted ? 'kartu-tugas selesai' : 'kartu-tugas';
+
+                htmlContent += `
+                    <div class="${taskClass}">
+                        <div class="bulat-cek" onclick="toggleStatus(${tugas.id})">
+                            ${checkIcon}
+                        </div>
+                        
+                        <div class="detail-tugas">
+                            <div class="mata-pelajaran">
+                                <i class="fa-solid fa-book"></i> ${tugas.mapel}
+                            </div>
+                            
+                            <h3 style="${isCompleted ? 'text-decoration: line-through;' : ''}">${tugas.judul}</h3>
+                            
+                            <div class="waktu">
+                                <i class="fa-regular fa-calendar"></i> ${tugas.deadline}
+                                <i class="fa-regular fa-clock" style="margin-left: 5px;"></i> ${tugas.jam}
+                            </div>
+
+                            <div class="badge-status ${tugas.badgeClass}">
+                                <i class="fa-solid fa-pen-nib"></i> ${tugas.badge}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = htmlContent;
+        }
+
+        // --- FUNGSI FILTER DAN GANTI TAB ---
+        function filterTasks(status) {
+            document.querySelectorAll('.tombol-tab').forEach(btn => {
+                btn.classList.remove('aktif');
+            });
+
+            let filteredTasks = dataPR;
+            let activeTabId = 'tabAll';
+
+            if (status === 'pending') {
+                filteredTasks = dataPR.filter(t => t.status === 'pending');
+                activeTabId = 'tabPending';
+            } else if (status === 'completed') {
+                filteredTasks = dataPR.filter(t => t.status === 'completed');
+                activeTabId = 'tabCompleted';
+            }
+            
+            document.getElementById(activeTabId).classList.add('aktif');
+
+            renderTasks(filteredTasks);
+            updateCounters(); 
+        }
+
+        // --- FUNGSI UNTUK MENGGANTI STATUS TUGAS ---
+        function toggleStatus(id) {
+            const taskIndex = dataPR.findIndex(t => t.id === id);
+            if (taskIndex !== -1) {
+                const currentStatus = dataPR[taskIndex].status;
+                const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
+                
+                dataPR[taskIndex].status = newStatus;
+                dataPR[taskIndex].badge = newStatus === 'completed' ? 'Selesai' : 'Sedang dikerjakan';
+                dataPR[taskIndex].badgeClass = newStatus === 'completed' ? 'badge-green' : 'badge-yellow';
+                
+                let activeTab = 'all';
+                if (document.getElementById('tabPending').classList.contains('aktif')) {
+                    activeTab = 'pending';
+                } else if (document.getElementById('tabCompleted').classList.contains('aktif')) {
+                    activeTab = 'completed';
+                }
+
+                filterTasks(activeTab);
+
+                alert(`Status PR ID ${id} diubah menjadi ${newStatus.toUpperCase()}`);
+            }
+        }
+
+        // --- FUNGSI WIFI ---
+        function bukaPopup() {
+            // BARIS DIPERBAIKI: Pastikan kotak info WiFi terlihat sebelum membuka popup
+            document.getElementById('infoBoxWifi').style.display = 'flex'; 
+            document.getElementById('popupWifi').style.display = 'flex';
+        }
+
+        function tutupPopup() {
+            document.getElementById('popupWifi').style.display = 'none';
+        }
+
+        function simpanWifi() {
+            const btn = document.querySelector('.btn-simpan');
+            const ssid = document.getElementById('wifiSSID').value;
+            const password = document.getElementById('wifiPassword').value;
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyambungkan...';
+            
+            setTimeout(() => {
+                if (ssid && password) {
+                    alert(`Berhasil mengirim data WiFi ke alat:\nSSID: ${ssid}\nPassword: ${password.replace(/./g, '*')}\nAlat terhubung.`);
+                    
+                    // Baris yang menyembunyikan kotak info setelah sukses
+                    document.getElementById('infoBoxWifi').style.display = 'none'; 
+
+                } else {
+                    alert("Gagal: Nama WiFi atau Password tidak boleh kosong.");
+                }
+
+                btn.innerHTML = 'Sambungkan';
+                tutupPopup();
+            }, 2000);
+        }
+    </script>
+
+</body>
+</html>
